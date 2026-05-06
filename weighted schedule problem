@@ -1,0 +1,45 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct Interval {
+    int start, end, weight;
+};
+
+// Binary search: latest interval that ends before 'start'
+int latestNonConflict(vector<Interval>& jobs, int i) {
+    int lo = 0, hi = i - 1;
+    while (lo <= hi) {
+        int mid = (lo + hi) / 2;
+        if (jobs[mid].end <= jobs[i].start) {
+            if (jobs[mid+1].end <= jobs[i].start) lo = mid + 1;
+            else return mid;
+        } else hi = mid - 1;
+    }
+    return -1;
+}
+
+int weightedJobScheduling(vector<Interval>& jobs) {
+    int n = jobs.size();
+    sort(jobs.begin(), jobs.end(), [](const Interval& a, const Interval& b){ return a.end < b.end; });
+    vector<int> dp(n);
+    dp[0] = jobs[0].weight;
+    for (int i = 1; i < n; i++) {
+        int inclProfit = jobs[i].weight;
+        int lnc = latestNonConflict(jobs, i);
+        if (lnc != -1) inclProfit += dp[lnc];
+        dp[i] = max(inclProfit, dp[i-1]);
+    }
+    return dp[n-1];
+}
+
+int main() {
+    vector<Interval> jobs = {
+        {1, 3, 50}, {2, 5, 20}, {4, 6, 30},
+        {6, 8, 50}, {5, 7, 10}, {8, 9, 50}
+    };
+    cout << "Jobs (start, end, weight):\n";
+    for (auto& j : jobs) cout << "  [" << j.start << "," << j.end << "] w=" << j.weight << "\n";
+    cout << "Maximum profit: " << weightedJobScheduling(jobs) << endl;
+}
